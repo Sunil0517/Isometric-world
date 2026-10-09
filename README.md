@@ -60,6 +60,16 @@ This is an outdoor playable implementation, not the completion of every item in 
 
 Set `NEXT_PUBLIC_SITE_URL` to the canonical origin before building to generate a sitemap and robots sitemap reference. Run all checks and build, then have an authorized human use the host's normal Next.js publishing workflow. Agent sessions must never run production deployment commands, `deploy.sh`, push to main, or create/push deploy tags.
 
+## Vercel deployment
+
+This repository includes a GitHub Actions workflow at `.github/workflows/vercel-deploy.yml` that deploys to Vercel production on every push to `main` (and can also be run manually with **Run workflow**).
+
+Configure these repository secrets before using it:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
 ## Dependency audit note
 
 The npm audit check on 9 October 2026 reported a `braces <=3.0.3` stack-exhaustion advisory through the existing Next.js ESLint configuration (`eslint-config-next → fast-glob → micromatch → braces`). This is a development tooling chain; the registry currently exposes no newer braces release. npm's proposed automatic fix downgrades the Next.js lint configuration to 14.x, so it has not been applied to this Next.js 16 project. Recheck this chain when a compatible patch is released.
