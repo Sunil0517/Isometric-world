@@ -1,9 +1,12 @@
 import { locations, type VillageLocation } from "./data";
-export function cameraMovement(x: number, forward: number) {
+export function cameraMovement(x: number, forward: number, yaw = Math.PI / 4) {
   const length = Math.hypot(x, forward);
   if (!length) return { x: 0, z: 0 };
-  const scale = 1 / Math.max(1, length) / Math.SQRT2;
-  return { x: (x - forward) * scale, z: (-x - forward) * scale };
+  const scale = 1 / Math.max(1, length);
+  return {
+    x: (x * Math.cos(yaw) - forward * Math.sin(yaw)) * scale,
+    z: (-x * Math.sin(yaw) - forward * Math.cos(yaw)) * scale,
+  };
 }
 export function nearestLocation(
   x: number,

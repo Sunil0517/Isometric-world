@@ -85,9 +85,70 @@ select:focus-visible {
 .scene-host {
   position: absolute;
   inset: 35px 0 0;
+  isolation: isolate;
 }
 .scene-host canvas {
   touch-action: none;
+}
+.arrival-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px 0;
+  border-radius: 12px;
+  background: var(--gold);
+  color: var(--forest);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 3px 15px #182e2d60;
+}
+.arrival-pin span {
+  margin-bottom: -12px;
+  color: var(--gold);
+  font-size: 22px;
+}
+.view-controls {
+  position: absolute;
+  top: 150px;
+  right: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 320px;
+  z-index: 8;
+}
+.view-switch,
+.zoom-buttons {
+  display: flex;
+  gap: 4px;
+}
+.view-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  border: 1px solid #c4d5ae50;
+  border-radius: 12px;
+  background: #273f36ed;
+}
+.view-controls button[aria-pressed="true"] {
+  background: var(--gold);
+  color: var(--forest);
+}
+.view-controls button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.view-controls small {
+  width: 100%;
+  font-size: 10px;
+  text-align: right;
+  color: #d4dcc7;
 }
 .village-vignette {
   position: absolute;
@@ -177,7 +238,7 @@ select:focus-visible {
   width: 36px;
   height: 36px;
   border: 1px solid #bed0b32a;
-  background: #26423860;
+  background: #273f36ed;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -974,10 +1035,10 @@ kbd {
 }
 @media (max-width: 760px) {
   .village-experience {
-    min-height: 600px;
+    min-height: 100svh;
   }
   .village-header {
-    padding: 20px;
+    padding: max(12px, env(safe-area-inset-top)) 12px 12px;
     gap: 10px;
     align-items: flex-start;
   }
@@ -1004,11 +1065,24 @@ kbd {
     gap: 5px;
   }
   .header-tools button {
-    width: 31px;
-    height: 31px;
+    width: 44px;
+    height: 44px;
   }
-  .header-tools button:nth-child(2) {
+  .village-brand .brand-symbol {
     display: none;
+  }
+  .village-brand > span:last-child {
+    max-width: 125px;
+    font-size: 13px;
+  }
+  .village-brand small {
+    font-size: 7px;
+  }
+  .view-controls {
+    top: 140px;
+    right: 12px;
+    max-width: calc(100% - 24px);
+    gap: 6px;
   }
   .header-tools .mobile-menu {
     display: grid;
@@ -1130,7 +1204,7 @@ kbd {
     font-size: 8px;
   }
   .is-exploring .scene-host {
-    inset: 100px -70px 90px;
+    inset: 0;
   }
   .is-exploring .village-vignette {
     background: linear-gradient(
@@ -1160,13 +1234,15 @@ kbd {
     position: absolute;
     left: 25px;
     right: 25px;
-    bottom: 35px;
+    bottom: max(20px, env(safe-area-inset-bottom));
     justify-content: space-between;
     align-items: center;
     z-index: 8;
     touch-action: none;
+    pointer-events: none;
   }
   .joystick {
+    pointer-events: auto;
     width: 100px;
     height: 100px;
     border: 1px solid #c4d5ae50;
@@ -1193,6 +1269,7 @@ kbd {
     gap: 15px;
   }
   .touch-actions button {
+    pointer-events: auto;
     height: 63px;
     width: 63px;
     border-radius: 50%;
@@ -1763,7 +1840,9 @@ kbd {
   justify-content: center;
   color: #3b5038;
   cursor: pointer;
-  transition: transform 0.15s, background-color 0.15s;
+  transition:
+    transform 0.15s,
+    background-color 0.15s;
 }
 .hud-sound-toggle:hover {
   background: #e2eccf;
@@ -1847,7 +1926,8 @@ kbd {
   background: #dbe6ce;
 }
 @keyframes pulse-combo {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {

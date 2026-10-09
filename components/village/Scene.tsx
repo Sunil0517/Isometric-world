@@ -5,6 +5,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import World from "./World";
 import Player from "./Player";
+import CameraControls from "./CameraControls";
 import AdventureWorld from "./minigames/AdventureWorld";
 import RealisticLighting from "./RealisticLighting";
 import { useGame } from "@/lib/village/store";
@@ -44,11 +45,15 @@ export default function Scene() {
       onCreated={({ gl }) => {
         const context = gl.getContext();
         const info = context.getExtension("WEBGL_debug_renderer_info");
-        const renderer = info ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "";
-        if (/swiftshader|llvmpipe|software/i.test(renderer)) useGame.setState({ quality: "low" });
+        const renderer = info
+          ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL))
+          : "";
+        if (/swiftshader|llvmpipe|software/i.test(renderer))
+          useGame.setState({ quality: "low" });
       }}
     >
       <ContextRecovery />
+      <CameraControls />
       <Suspense fallback={null}>
         <Physics timeStep={1 / 60} gravity={[0, -18, 0]}>
           <RealisticLighting />

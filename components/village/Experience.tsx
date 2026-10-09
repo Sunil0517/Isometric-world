@@ -14,9 +14,18 @@ import {
   ChevronsUp,
   Menu,
   X,
+  Eye,
+  Minus,
+  Plus,
 } from "lucide-react";
 import { locations, portfolio } from "@/lib/village/data";
-import { input, releaseInput, useGame } from "@/lib/village/store";
+import {
+  input,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  releaseInput,
+  useGame,
+} from "@/lib/village/store";
 import { blocksMovement, useAdventure } from "@/lib/village/minigames/store";
 import { nearestActivity } from "@/lib/village/minigames/config";
 import Panels, { VillageMap } from "./Panels";
@@ -55,6 +64,7 @@ function interact() {
 }
 function MobileControls() {
   const pad = useRef<HTMLDivElement>(null),
+    pointer = useRef<number | null>(null),
     [stick, setStick] = useState({ x: 0, y: 0 });
   const near = useGame((s) => s.near),
     position = useGame((s) => s.position);
@@ -68,7 +78,9 @@ function MobileControls() {
     input.y = -y / length;
     setStick({ x: input.x * 28, y: -input.y * 28 });
   }
-  function stop() {
+  function stop(event: React.PointerEvent) {
+    if (pointer.current !== event.pointerId) return;
+    pointer.current = null;
     input.x = 0;
     input.y = 0;
     setStick({ x: 0, y: 0 });
@@ -81,11 +93,17 @@ function MobileControls() {
         role="group"
         aria-label="Movement joystick"
         onPointerDown={(e) => {
+          if (pointer.current !== null) return;
+          pointer.current = e.pointerId;
           e.currentTarget.setPointerCapture(e.pointerId);
           update(e);
         }}
         onPointerMove={(e) => {
-          if (e.currentTarget.hasPointerCapture(e.pointerId)) update(e);
+          if (
+            pointer.current === e.pointerId &&
+            e.currentTarget.hasPointerCapture(e.pointerId)
+          )
+            update(e);
         }}
         onPointerUp={stop}
         onPointerCancel={stop}
@@ -114,6 +132,50 @@ function MobileControls() {
           <small>Explore</small>
         </button>
       </div>
+    </div>
+  );
+}
+function ViewControls() {
+  const view = useGame((s) => s.view),
+    zoom = useGame((s) => s.zoom),
+    setZoom = useGame((s) => s.setZoom);
+  return (
+    <div className="view-controls" role="group" aria-label="Camera controls">
+      <div className="view-switch">
+        <button
+          aria-pressed={view === "birdseye"}
+          onClick={() => useGame.setState({ view: "birdseye" })}
+        >
+          <Map size={16} /> Bird’s-eye
+        </button>
+        <button
+          aria-pressed={view === "first-person"}
+          onClick={() => useGame.setState({ view: "first-person" })}
+        >
+          <Eye size={16} /> First-person
+        </button>
+      </div>
+      <div className="zoom-buttons">
+        <button
+          aria-label="Zoom out"
+          disabled={zoom <= MIN_ZOOM}
+          onClick={() => setZoom(zoom - 0.25)}
+        >
+          <Minus size={18} />
+        </button>
+        <button
+          aria-label="Zoom in"
+          disabled={zoom >= MAX_ZOOM}
+          onClick={() => setZoom(zoom + 0.25)}
+        >
+          <Plus size={18} />
+        </button>
+      </div>
+      <small>
+        {view === "first-person"
+          ? "Drag to look · Pinch or scroll to zoom"
+          : "Pinch or scroll to zoom"}
+      </small>
     </div>
   );
 }
@@ -420,6 +482,11 @@ export default function Experience() {
         <Compass size={24} />
         <span>N</span>
       </div>
+      {started &&
+        !panel &&
+        (!activeGame || (activeGame === "parkour" && phase === "playing")) && (
+          <ViewControls />
+        )}
       <footer className="village-footer">
         <div className="controls-hint">
           <span className="control-keys">

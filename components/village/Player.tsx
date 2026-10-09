@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
@@ -11,12 +12,7 @@ import {
 import * as THREE from "three";
 import { Box, Cylinder, Rock } from "./Primitives";
 import { movement, type MovementState } from "@/lib/village/data";
-import {
-  canJump,
-  cameraMovement,
-  clamp,
-  nearestLocation,
-} from "@/lib/village/logic";
+import { canJump, cameraMovement, nearestLocation } from "@/lib/village/logic";
 import {
   adventureRuntime,
   blocksMovement,
@@ -31,7 +27,38 @@ import {
   checkpoints,
   nearestCheckpointIndex,
 } from "@/lib/village/minigames/course";
-import { input, releaseInput, useGame } from "@/lib/village/store";
+import {
+  cameraLook,
+  input,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  releaseInput,
+  useGame,
+} from "@/lib/village/store";
+
+function ArrivalPin() {
+  const started = useGame((s) => s.started),
+    view = useGame((s) => s.view);
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    if (!started) return;
+    const timer = setTimeout(() => setVisible(false), 8000);
+    return () => clearTimeout(timer);
+  }, [started]);
+  if (!visible || (started && view === "first-person")) return null;
+  return (
+    <Html
+      position={[0, 2.5, 0]}
+      center
+      zIndexRange={[7, 0]}
+      style={{ pointerEvents: "none" }}
+    >
+      <div className="arrival-pin" role="status">
+        You are here<span>▼</span>
+      </div>
+    </Html>
+  );
+}
 
 function CharacterModel({
   visual,
@@ -145,6 +172,7 @@ export default function Player() {
     wasGrounded = useRef(false);
   const cameraTarget = useRef(new THREE.Vector3()),
     cameraDesired = useRef(new THREE.Vector3());
+  const previousCamera = useRef<THREE.Camera | null>(null);
   useEffect(() => {
     const c = world.createCharacterController(0.025);
     c.enableAutostep(0.4, 0.2, true);
@@ -227,7 +255,11 @@ export default function Player() {
         Number(input.keys.has("s") || input.keys.has("arrowdown")) +
         input.y
       : 0;
-    const direction = cameraMovement(x, y),
+    const direction = cameraMovement(
+        x,
+        y,
+        game.view === "first-person" ? cameraLook.yaw : Math.PI / 4,
+      ),
       running = input.keys.has("shift"),
       speed = running ? movement.runSpeed : movement.walkSpeed;
     const blend =
@@ -380,21 +412,41 @@ export default function Player() {
         useAdventure.getState().phase === "playing" &&
         adventureRuntime.invulUntil > adventureRuntime.courseTime &&
         Math.floor(clock.elapsedTime * 14) % 2 === 0;
-      visual.current.visible = !hurtBlink;
+      visual.current.visible =
+        !hurtBlink && !(game.started && game.view === "first-person");
     }
     if (limbs.current)
       limbs.current.children.forEach((limb, i) => {
         limb.rotation.x = game.reduced ? 0 : stride * (i % 2 ? -1 : 1);
       });
     const inArena = p.x > ARENA_MIN_X;
+    if (
+      game.started &&
+      game.view === "first-person" &&
+      camera instanceof THREE.PerspectiveCamera
+    ) {
+      camera.position.set(p.x, p.y + 0.78, p.z);
+      camera.rotation.set(cameraLook.pitch, cameraLook.yaw, 0, "YXZ");
+      const fov = 85 - ((game.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 30;
+      camera.fov += (fov - camera.fov) * (1 - Math.exp(-8 * delta));
+      camera.updateProjectionMatrix();
+      return;
+    }
     cameraDesired.current.set(
-      inArena ? p.x : game.started ? clamp(p.x, -7, 7) : 0,
-      inArena ? 1.5 : 0,
-      inArena ? p.z : game.started ? clamp(p.z, -5, 8) : 0,
+      game.started ? p.x : 0,
+      game.started ? p.y : 0,
+      game.started ? p.z : 5,
     );
-    if (adventureRuntime.cameraSnap) {
+    if (adventureRuntime.cameraSnap || previousCamera.current !== camera) {
       adventureRuntime.cameraSnap = false;
       cameraTarget.current.copy(cameraDesired.current);
+      previousCamera.current = camera;
+      if (camera instanceof THREE.OrthographicCamera)
+        camera.zoom =
+          Math.min(size.width / 58, size.height / 43) *
+          (game.started ? 1.32 : 1) *
+          (inArena ? 1.12 : 1) *
+          game.zoom;
     }
     cameraTarget.current.lerp(
       cameraDesired.current,
@@ -402,7 +454,7 @@ export default function Player() {
     );
     camera.position.set(
       cameraTarget.current.x + 38,
-      42,
+      cameraTarget.current.y + 42,
       cameraTarget.current.z + 38,
     );
     camera.lookAt(cameraTarget.current);
@@ -426,6 +478,7 @@ export default function Player() {
     >
       <CapsuleCollider args={[0.4, 0.32]} />
       <CharacterModel visual={visual} limbs={limbs} />
+      <ArrivalPin />
     </RigidBody>
   );
 }

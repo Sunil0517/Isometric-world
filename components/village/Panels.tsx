@@ -21,7 +21,7 @@ import {
 } from "@/lib/village/data";
 import { crystals } from "@/lib/village/minigames/config";
 import { useAdventure } from "@/lib/village/minigames/store";
-import { restoreFocus, useGame } from "@/lib/village/store";
+import { MAX_ZOOM, MIN_ZOOM, restoreFocus, useGame } from "@/lib/village/store";
 export const sectionIcons = {
   about: House,
   projects: Flame,
@@ -359,6 +359,7 @@ export default function Panels() {
     quality = useGame((s) => s.quality),
     reduced = useGame((s) => s.reduced),
     zoom = useGame((s) => s.zoom),
+    view = useGame((s) => s.view),
     volume = useGame((s) => s.volume),
     sound = useGame((s) => s.sound);
   const location = locations.find((l) => l.id === panel);
@@ -436,15 +437,31 @@ export default function Panels() {
                         </select>
                       </label>
                       <label>
+                        Camera view
+                        <select
+                          value={view}
+                          onChange={(e) =>
+                            useGame.setState({
+                              view: e.target.value as typeof view,
+                            })
+                          }
+                        >
+                          <option value="birdseye">Bird’s-eye view</option>
+                          <option value="first-person">
+                            First-person view
+                          </option>
+                        </select>
+                      </label>
+                      <label>
                         Camera zoom
                         <input
                           type="range"
-                          min=".75"
-                          max="1.5"
+                          min={MIN_ZOOM}
+                          max={MAX_ZOOM}
                           step=".05"
                           value={zoom}
                           onChange={(e) =>
-                            useGame.setState({ zoom: Number(e.target.value) })
+                            useGame.getState().setZoom(Number(e.target.value))
                           }
                         />
                       </label>

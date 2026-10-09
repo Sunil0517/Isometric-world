@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import type { MovementState, Section } from "./data";
 export type Quality = "low" | "medium" | "high" | "ultra";
+export const MIN_ZOOM = 0.75;
+export const MAX_ZOOM = 3;
+export type ViewMode = "birdseye" | "first-person";
+export const cameraLook = { yaw: Math.PI / 4, pitch: 0 };
 interface GameState {
   started: boolean;
   ready: boolean;
@@ -13,6 +17,8 @@ interface GameState {
   quality: Quality;
   reduced: boolean;
   zoom: number;
+  view: ViewMode;
+  setZoom: (zoom: number) => void;
   sound: boolean;
   volume: number;
   start: () => void;
@@ -30,7 +36,10 @@ export const useGame = create<GameState>((set) => ({
   motion: "idle",
   quality: "medium",
   reduced: false,
-  zoom: 1,
+  zoom: MAX_ZOOM,
+  view: "birdseye",
+  setZoom: (zoom) =>
+    set({ zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom)) }),
   sound: false,
   volume: 0.3,
   start: () => set({ started: true }),
