@@ -1,0 +1,74 @@
+import { create } from "zustand";
+import type { MovementState, Section } from "./data";
+export type Quality = "low" | "medium" | "high" | "ultra";
+interface GameState {
+  started: boolean;
+  ready: boolean;
+  panel: Section | "map" | "settings" | null;
+  near: Section | null;
+  visited: Section[];
+  position: [number, number];
+  elevation: number;
+  motion: MovementState;
+  quality: Quality;
+  reduced: boolean;
+  zoom: number;
+  sound: boolean;
+  volume: number;
+  start: () => void;
+  open: (panel: GameState["panel"]) => void;
+  close: () => void;
+}
+export const useGame = create<GameState>((set) => ({
+  started: false,
+  ready: false,
+  panel: null,
+  near: null,
+  visited: [],
+  position: [0, 5],
+  elevation: 0.85,
+  motion: "idle",
+  quality: "medium",
+  reduced: false,
+  zoom: 1,
+  sound: false,
+  volume: 0.3,
+  start: () => set({ started: true }),
+  open: (panel) => {
+    if (!useGame.getState().panel && typeof document !== "undefined")
+      focusOrigin =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+    set((s) => ({
+      panel,
+      visited:
+        panel &&
+        !["map", "settings"].includes(panel) &&
+        !s.visited.includes(panel as Section)
+          ? [...s.visited, panel as Section]
+          : s.visited,
+    }));
+  },
+  close: () => set({ panel: null }),
+}));
+// Frame-critical input is deliberately outside React subscriptions.
+export const input = { keys: new Set<string>(), x: 0, y: 0, jumpAt: -Infinity };
+export function releaseInput() {
+  input.keys.clear();
+  input.x = 0;
+  input.y = 0;
+  input.jumpAt = -Infinity;
+}
+
+let focusOrigin: HTMLElement | null = null;
+export function restoreFocus() {
+  if (focusOrigin?.isConnected && focusOrigin !== document.body)
+    focusOrigin.focus();
+  else
+    document
+      .getElementById(
+        useGame.getState().started ? "world-input" : "explore-button",
+      )
+      ?.focus();
+}
