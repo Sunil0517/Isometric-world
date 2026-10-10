@@ -12,7 +12,7 @@ export const activities: {
     prompt: "Enter the jungle trial",
     position: [-7, 0, 11.5],
     description:
-      "Dodge logs and spiked balls, stomp grunts, bounce, boost, and collect gems.",
+      "Reach twelve flags: master precision jumps, faster logs, narrow bridges, and spiked ascents.",
   },
 ];
 // Inside the tree ring and outside every building/forge collider.

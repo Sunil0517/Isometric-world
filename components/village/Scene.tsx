@@ -36,7 +36,7 @@ export default function Scene() {
             ? [1, 2]
             : [1, 1.5]
       }
-      shadows={quality !== "low"}
+      shadows="percentage"
       gl={{
         antialias: quality !== "low",
         alpha: true,

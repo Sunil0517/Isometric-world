@@ -1,7 +1,7 @@
 "use client";
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html } from "@/components/village/SceneHtml";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { Box, Cylinder, Rock } from "../Primitives";

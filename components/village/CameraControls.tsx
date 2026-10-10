@@ -4,7 +4,7 @@ import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { cameraLook, useGame } from "@/lib/village/store";
 import { clamp } from "@/lib/village/logic";
-import { blocksMovement } from "@/lib/village/minigames/store";
+import { useAdventure, blocksMovement } from "@/lib/village/minigames/store";
 
 export default function CameraControls() {
   const view = useGame((s) => s.view);
@@ -30,7 +30,10 @@ export default function CameraControls() {
       if (!enabled()) return;
       const game = useGame.getState();
       if (pointers.size === 2 && before > 0) {
-        game.setZoom((game.zoom * distance()) / before);
+        const adventure = useAdventure.getState();
+        if (adventure.activeGame === "parkour")
+          adventure.setTrialZoom((adventure.trialZoom * distance()) / before);
+        else game.setZoom((game.zoom * distance()) / before);
       } else if (game.started && game.view === "first-person") {
         cameraLook.yaw -= (event.clientX - previous.x) * 0.005;
         cameraLook.pitch = clamp(
@@ -55,7 +58,12 @@ export default function CameraControls() {
       if (!enabled()) return;
       event.preventDefault();
       const game = useGame.getState();
-      game.setZoom(game.zoom * Math.exp(-event.deltaY * 0.002));
+      const adventure = useAdventure.getState();
+      if (adventure.activeGame === "parkour")
+        adventure.setTrialZoom(
+          adventure.trialZoom * Math.exp(-event.deltaY * 0.002),
+        );
+      else game.setZoom(game.zoom * Math.exp(-event.deltaY * 0.002));
     };
     canvas.addEventListener("pointerdown", down);
     canvas.addEventListener("pointermove", move);

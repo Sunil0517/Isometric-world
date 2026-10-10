@@ -340,7 +340,7 @@ export function checkArrowHit(
         points: target.def.pointsBullseye,
         message:
           target.def.kind === "shrine"
-            ? "🌟 SUN SHRINE BULLSEYE! +250"
+            ? `🌟 SUN SHRINE BULLSEYE! +${target.def.pointsBullseye}`
             : `🎯 BULLSEYE! +${target.def.pointsBullseye}`,
         hitX: target.x,
         hitY: target.y,

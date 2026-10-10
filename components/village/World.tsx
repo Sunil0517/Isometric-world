@@ -1,4 +1,5 @@
 "use client";
+import { waterShader } from "./waterShader";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
@@ -9,6 +10,7 @@ import {
 import * as THREE from "three";
 import { Box, Cylinder, Rock, geometries, material } from "./Primitives";
 import Buildings from "./Buildings";
+import HiddenLeaf from "./HiddenLeaf";
 import { locations } from "@/lib/village/data";
 import { seeded } from "@/lib/village/logic";
 import { useGame } from "@/lib/village/store";
@@ -86,7 +88,7 @@ function makeDecor() {
     for (let j = 0; j < 3; j++)
       foliage.push({
         position: [x, height * (0.48 + j * 0.19), z],
-        scale: [r * (1.45 - j * 0.32), height * 0.5, r * (1.45 - j * 0.32)],
+        scale: [r * (1.6 - j * 0.2), height * 0.27, r * (1.6 - j * 0.2)],
         color: ["#526b4e", "#628348", "#86a76a", "#3f6250"][i % 4],
       });
   }
@@ -180,58 +182,31 @@ function Water() {
     if (!reduced) shaderTime.current.value = clock.elapsedTime;
     if (ref.current && !reduced)
       (ref.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
-        0.12 + Math.sin(clock.elapsedTime) * 0.04;
+        0;
   });
   return (
     <>
       <mesh ref={ref} geometry={geometry} receiveShadow>
-        {quality === "ultra" ? (
+        {quality !== "low" ? (
           <meshPhysicalMaterial
             color="#5c9ea8"
             roughness={0.16}
-            metalness={0.12}
-            clearcoat={1}
-            clearcoatRoughness={0.08}
+            metalness={0}
+            ior={1.333}
             side={THREE.DoubleSide}
-            onBeforeCompile={(shader) => {
-              shader.uniforms.uRiverTime = shaderTime.current;
-              shader.vertexShader = shader.vertexShader
-                .replace(
-                  "#include <common>",
-                  "#include <common>\nvarying vec3 vRiverPosition;",
-                )
-                .replace(
-                  "#include <begin_vertex>",
-                  "#include <begin_vertex>\nvRiverPosition = position;",
-                );
-              shader.fragmentShader = shader.fragmentShader
-                .replace(
-                  "#include <common>",
-                  "#include <common>\nuniform float uRiverTime; varying vec3 vRiverPosition;",
-                )
-                .replace(
-                  "#include <normal_fragment_maps>",
-                  `#include <normal_fragment_maps>
-              float waveX = sin(vRiverPosition.x * 3.0 + vRiverPosition.z * 1.5 - uRiverTime * 1.4);
-              float waveZ = cos(vRiverPosition.z * 5.0 - vRiverPosition.x * 0.7 + uRiverTime);
-              normal = normalize(normal + vec3(waveX * 0.12, waveZ * 0.08, 0.0));
-            `,
-                )
-                .replace(
-                  "#include <color_fragment>",
-                  `#include <color_fragment>
-              float ripple = sin(vRiverPosition.x * 3.0 + vRiverPosition.z * 5.0 - uRiverTime * 1.6);
-              diffuseColor.rgb += smoothstep(0.92, 1.0, ripple) * vec3(0.12, 0.16, 0.14);
-            `,
-                );
-            }}
+            customProgramCacheKey={() => "water-pbr-v2"}
+            onBeforeCompile={(shader) =>
+              waterShader(shader, shaderTime.current)
+            }
           />
         ) : (
           <meshStandardMaterial
-            color="#77b8c8"
-            emissive="#438d9c"
-            emissiveIntensity={0.1}
-            roughness={0.3}
+            color="#397f83"
+            customProgramCacheKey={() => "water-pbr-v2"}
+            onBeforeCompile={(shader) =>
+              waterShader(shader, shaderTime.current)
+            }
+            roughness={0.24}
             side={THREE.DoubleSide}
           />
         )}
@@ -373,12 +348,12 @@ export default function World() {
   });
   return (
     <>
-      <ambientLight intensity={0.8} color="#e0ebd5" />
-      <hemisphereLight args={["#d6e5e7", "#728555", 1.4]} />
+      <ambientLight intensity={0.3} color="#e0ebd5" />
+      <hemisphereLight args={["#d6e5e7", "#728555", 0.75]} />
       <directionalLight
         ref={sun}
         position={[-15, 30, 10]}
-        intensity={3}
+        intensity={2.4}
         color="#ffe0ac"
         castShadow
         shadow-mapSize={
@@ -392,12 +367,13 @@ export default function World() {
         shadow-camera-right={32}
         shadow-camera-top={32}
         shadow-camera-bottom={-32}
-        shadow-normalBias={0.08}
+        shadow-normalBias={0.025}
+        shadow-bias={-0.0002}
         shadow-radius={4}
       />
       <mesh position={[0, -5, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[300, 300]} />
-        <meshStandardMaterial color="#243f3d" roughness={1} />
+        <shadowMaterial transparent opacity={0.22} depthWrite={false} />
       </mesh>
       <mesh position={[0, -1.85, 0]} receiveShadow castShadow>
         <cylinderGeometry args={[26, 24, 3.6, 18]} />
@@ -431,13 +407,14 @@ export default function World() {
         <CuboidCollider args={[1.3, 0.5, 0.5]} position={[-4, 0.5, 18]} />
       </RigidBody>
       <Batch items={decor.trunks} kind="cylinder" />
-      <Batch items={decor.foliage} kind="cone" />
+      <Batch items={decor.foliage} kind="sphere" />
       <Batch items={decor.rocks} kind="sphere" />
       <Batch items={decor.paths} kind="sphere" />
       <Batch items={decor.grass} kind="cone" />
       <Batch items={decor.flowers} kind="sphere" />
       <Water />
       <Buildings />
+      <HiddenLeaf />
       <Effects />
       {[
         [-3, 3],

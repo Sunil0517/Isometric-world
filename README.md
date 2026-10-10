@@ -1,6 +1,6 @@
-# The Forest Village
+# Hidden Leaf Village
 
-A playable isometric developer portfolio built with Next.js 16, React 19, TypeScript, React Three Fiber, Drei, Rapier, Zustand, Radix Dialog, and Motion.
+Sunil Kumawat’s playable Hidden Leaf Village portfolio, filled from his supplied resume and built with Next.js 16, React 19, TypeScript, React Three Fiber, Drei, Rapier, Zustand, Radix Dialog, and Motion.
 
 ## Run locally
 
@@ -32,11 +32,15 @@ Sound is muted until enabled. Panel focus returns to the control that opened it.
 
 ## Content
 
-- `lib/portfolio.ts`: typed profile, project concepts and descriptions, optional live/repository links, contact links, and an empty editable experience timeline.
-- `lib/village/data.ts`: typed landmarks, movement constants, sample skills.
-- `components/village/Panels.tsx`: portfolio presentation and empty states.
+- `lib/portfolio.ts`: resume-sourced profile, contact details, two work contributions, two career entries, skills, education, and certifications.
+- `lib/village/data.ts`: Hidden Leaf landmarks and movement constants; re-exports shared portfolio data.
+- `components/village/Panels.tsx`: interactive portfolio presentation.
+- `components/village/ResumeDetails.tsx`: shared education, certifications, and resume download.
+- `components/village/HiddenLeaf.tsx`: original procedural Hidden Leaf village gate.
+- `components/village/VillageMap.tsx`: coordinate-based terrain map, numbered portfolio destinations, current position, visited landmarks, and optional crystal markers. The directory offers the same navigation as the pins; mobile layouts stack the map and directory.
+- `public/Sunil_Kumawat_Resume.docx`: the supplied original resume, available as a download.
 
-Keep empty contact links empty until real addresses are available. Projects and skills are explicitly marked as samples. No employment history, proficiency score, delivery service, or numerical achievement is invented.
+Professional content comes from the supplied resume. The projects are documented employer work contributions; no public project links were supplied. Career dates, including “Present,” are preserved as written. Contact links use the document’s email, phone, and embedded GitHub/LinkedIn targets. No proficiency scores or unreported achievements are invented.
 
 ## Architecture
 
@@ -54,7 +58,7 @@ To replace the character with a GLB, place an optimized, licensed asset in `publ
 
 ## Current scope and remaining work
 
-This is an outdoor playable implementation, not the completion of every item in the expansive original brief. Building entrances open accessible DOM panels; walkable interiors, roof fades, animated GLB assets, full authored career data, resume downloads, project screenshots/live links, swimming, terrain hills with matching colliders, camera obstruction fading, butterflies, and surface-specific footsteps remain future work. The audio is one optional ambient loop, rather than spatial forge and house soundscapes. Shader water and waterfalls are represented by simple stylized geometry. Tailwind/shadcn scaffolding is not included; styles are custom CSS with accessible Radix primitives. Performance presets control resolution and shadows, but real desktop/mobile hardware profiling has not been performed. The world is approximately 52 units across, rather than the eventual 100-unit target.
+This is an outdoor playable implementation, not the completion of every item in the expansive original brief. Building entrances open accessible DOM panels; walkable interiors, roof fades, animated GLB assets, project screenshots/live links, swimming, terrain hills with matching colliders, camera obstruction fading, butterflies, and surface-specific footsteps remain future work. The audio is one optional ambient loop, rather than spatial forge and house soundscapes. Shader water and waterfalls are represented by simple stylized geometry. Tailwind/shadcn scaffolding is not included; styles are custom CSS with accessible Radix primitives. Performance presets control resolution and shadows, but real desktop/mobile hardware profiling has not been performed. The world is approximately 52 units across, rather than the eventual 100-unit target.
 
 ## Hosting preparation
 

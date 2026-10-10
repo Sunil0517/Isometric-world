@@ -7,7 +7,7 @@ import {
   ARENA_MIN_X,
   parkourStars,
 } from "./course";
-import { releaseInput, useGame } from "../store";
+import { MAX_ZOOM, releaseInput, useGame } from "../store";
 export type Phase = "idle" | "playing" | "paused" | "success" | "result";
 export type Plant = { seed: string; stage: number; growth: number } | null;
 interface AdventureState {
@@ -22,6 +22,8 @@ interface AdventureState {
   collected: string[];
   garden: Plant[];
   checkpoint: number;
+  trialZoom: number;
+  setTrialZoom: (zoom: number) => void;
   hearts: number;
   gems: number;
   stars: number;
@@ -59,6 +61,9 @@ export const useAdventure = create<AdventureState>()(
       collected: [],
       garden: [null, null, null],
       checkpoint: -1,
+      trialZoom: 1,
+      setTrialZoom: (zoom) =>
+        set({ trialZoom: Math.max(0.6, Math.min(2.2, zoom)) }),
       hearts: MAX_HEARTS,
       gems: 0,
       stars: 0,
@@ -83,10 +88,14 @@ export const useAdventure = create<AdventureState>()(
       play: () => {
         releaseInput();
         const parkour = get().activeGame === "parkour";
-        if (parkour) resetParkourRun();
+        if (parkour) {
+          resetParkourRun();
+          useGame.setState({ view: "birdseye", zoom: MAX_ZOOM });
+        }
         // The jungle run starts on its first flag; the timer begins immediately.
         set({
           phase: "playing",
+          trialZoom: 1,
           elapsed: 0,
           score: 0,
           startedAt: performance.now(),
@@ -126,7 +135,7 @@ export const useAdventure = create<AdventureState>()(
         if (hearts === 0) get().fail();
         return hearts;
       },
-      heal: () => set((s) => ({ hearts: Math.min(MAX_HEARTS, s.hearts + 1) })),
+      heal: () => set((s) => ({ hearts: s.hearts + 1 })),
       collectGem: () => set((s) => ({ gems: s.gems + 1 })),
       fail: () => {
         const s = get();
@@ -168,7 +177,7 @@ export const useAdventure = create<AdventureState>()(
                 }
               : s.parkourBest,
         });
-        if (score >= 300) get().unlock(id);
+        if (id === "parkour" && stars > 0) get().unlock(id);
       },
       collect: (id) => {
         if (!crystals.some((c) => c.id === id) || get().collected.includes(id))

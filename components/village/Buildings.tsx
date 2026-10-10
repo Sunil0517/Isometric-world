@@ -1,11 +1,11 @@
 "use client";
-import { Html } from "@react-three/drei";
+import { Html } from "@/components/village/SceneHtml";
 import { useRef, useLayoutEffect } from "react";
-import { useFrame } from "@react-three/fiber";
-import { Object3D, Color, type Group, type InstancedMesh } from "three";
+import { Object3D, Color, type InstancedMesh } from "three";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { Box, Cone, Cylinder, Rock, geometries, material } from "./Primitives";
 import { locations, type VillageLocation } from "@/lib/village/data";
+import LeafEmblem from "./LeafEmblem";
 import { useGame } from "@/lib/village/store";
 
 function Window({
@@ -65,9 +65,7 @@ function RoofTiles({
         ref.current.setMatrixAt(index, dummy.matrix);
         ref.current.setColorAt(
           index,
-          new Color(
-            row % 2 ? color : color === "#578589" ? "#699599" : "#e3a358",
-          ),
+          new Color(color).multiplyScalar(row % 2 ? 1 : 1.12),
         );
       }
     ref.current.instanceMatrix.needsUpdate = true;
@@ -109,36 +107,18 @@ function Roof({
         </group>
       ))}
       <Box
-        color="#805131"
+        color={color}
         position={[0, 1.48, 0]}
-        scale={[0.3, 0.25, depth + 0.25]}
+        scale={[0.4, 0.3, depth + 0.65]}
       />
-    </group>
-  );
-}
-function Smoke({ position }: { position: [number, number, number] }) {
-  const ref = useRef<Group>(null),
-    reduced = useGame((s) => s.reduced);
-  useFrame(({ clock }) => {
-    if (!ref.current || reduced) return;
-    ref.current.children.forEach((p, i) => {
-      const t = (clock.elapsedTime * 0.3 + i / 5) % 1;
-      p.position.set(Math.sin(t * 4) * 0.35, t * 2.4, Math.cos(t * 3) * 0.2);
-      p.scale.setScalar(0.12 + t * 0.32);
-    });
-  });
-  return (
-    <group ref={ref} position={position}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <mesh key={i} position={[0, i * 0.3, 0]} scale={0.2}>
-          <icosahedronGeometry args={[1, 0]} />
-          <meshStandardMaterial
-            color="#d8d7c2"
-            transparent
-            opacity={0.25}
-            depthWrite={false}
-          />
-        </mesh>
+      {[-1, 1].map((side) => (
+        <group
+          key={side}
+          position={[side * width * 0.48, -0.2, 0]}
+          rotation={[0, 0, side * 0.18]}
+        >
+          <Box color={color} scale={[0.85, 0.22, depth + 0.45]} />
+        </group>
       ))}
     </group>
   );
@@ -213,31 +193,33 @@ function Cottage({ location }: { location: VillageLocation }) {
         width={width + 1.2}
         depth={depth + 1.1}
       />
-      <Box
-        color="#8c8779"
-        position={[1.4, 4.9, -0.9]}
-        scale={[0.8, 2.6, 0.8]}
-      />
-      {[0, 1, 2, 3].map((i) => (
-        <Box
-          key={i}
-          color="#ada390"
-          position={[1.4, 4 + i * 0.48, -0.91]}
-          scale={[0.85, 0.09, 0.85]}
-        />
-      ))}
-      <Box color="#8e795d" position={[1.4, 6.24, -0.9]} scale={[1, 0.22, 1]} />
-      <Smoke position={[1.4, 6.4, -0.9]} />
-      {!guild && (
-        <group position={[0, 4.35, depth / 2 + 0.24]}>
-          <Box color="#d8c49a" scale={[1.7, 1.5, 0.65]} />
-          <Roof
-            color={library ? "#578589" : "#c88342"}
-            width={2}
-            depth={1}
-            y={0.55}
-          />
-          <Window x={0} y={0} z={0.4} />
+      <group position={[0, 3.3, depth / 2 + 0.24]}>
+        <Box color="#344e43" scale={[1.35, 0.7, 0.08]} />
+        <Html
+          center
+          position={[0, 0, 0.07]}
+          transform
+          distanceFactor={5}
+          zIndexRange={[2, 0]}
+          style={{ pointerEvents: "none" }}
+        >
+          <div className="building-seal">
+            <LeafEmblem size={30} />
+          </div>
+        </Html>
+      </group>
+      {library && (
+        <group position={[-3.7, 0, -1]}>
+          <Box color="#6a4a35" position={[0, 1, 0]} scale={[0.18, 2, 0.18]} />
+          {[1, 0.7, 0.35].map((radius, i) => (
+            <Cylinder
+              key={radius}
+              color={i % 2 ? "#ece0be" : "#aa4838"}
+              position={[0, 2.1, 0.08 + i * 0.035]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[radius, 0.06, radius]}
+            />
+          ))}
         </group>
       )}
       {guild &&
@@ -379,6 +361,64 @@ function Cottage({ location }: { location: VillageLocation }) {
     </>
   );
 }
+function HokageOffice() {
+  return (
+    <>
+      <Cylinder
+        color="#9eaa90"
+        position={[0, 0.3, 0]}
+        scale={[2.55, 0.6, 2.55]}
+      />
+      <Cylinder
+        color="#dec49a"
+        position={[0, 2.1, 0]}
+        scale={[2.3, 3.3, 2.3]}
+      />
+      <Cylinder
+        color="#a94b38"
+        position={[0, 3.5, 0]}
+        scale={[2.4, 0.55, 2.4]}
+      />
+      <Cylinder
+        color="#b44f3d"
+        position={[0, 3.95, 0]}
+        scale={[2.85, 0.35, 2.85]}
+      />
+      <Cylinder
+        color="#e4d0a4"
+        position={[0, 4.6, 0]}
+        scale={[1.65, 1.1, 1.65]}
+      />
+      <Cone color="#a94b38" position={[0, 5.5, 0]} scale={[2.15, 1, 2.15]} />
+      <Cylinder
+        color="#435b46"
+        position={[0, 6.1, 0]}
+        scale={[0.14, 0.5, 0.14]}
+      />
+      {[-1, 1].map((side) => (
+        <Window key={side} x={side * 1.25} y={2.25} z={1.95} />
+      ))}
+      <Box
+        color="#604733"
+        position={[0, 1.45, 2.25]}
+        scale={[1.2, 2.3, 0.15]}
+      />
+      <Box color="#a84c39" position={[0, 1.45, 2.35]} scale={[1, 2.1, 0.08]} />
+      <Box color="#9eaa90" position={[0, 0.15, 2.8]} scale={[1.7, 0.3, 1.2]} />
+      <Html
+        transform
+        center
+        position={[0, 4.55, 1.7]}
+        distanceFactor={5}
+        zIndexRange={[2, 0]}
+        style={{ pointerEvents: "none" }}
+      >
+        <div className="hokage-seal">火</div>
+      </Html>
+      <CuboidCollider args={[2.3, 2.9, 2]} position={[0, 2.9, 0]} />
+    </>
+  );
+}
 function Tower() {
   return (
     <>
@@ -412,7 +452,7 @@ function Tower() {
       ))}
       <Box color="#725238" position={[0, 8.8, 0]} scale={[0.12, 2, 0.12]} />
       <Box
-        color="#e7b969"
+        color="#b9503e"
         position={[0.45, 9.2, 0]}
         scale={[0.85, 0.5, 0.045]}
       />
@@ -430,6 +470,8 @@ export default function Buildings() {
           <RigidBody type="fixed" colliders={false}>
             {location.id === "contact" ? (
               <Tower />
+            ) : location.id === "about" ? (
+              <HokageOffice />
             ) : (
               <Cottage location={location} />
             )}
@@ -443,8 +485,12 @@ export default function Buildings() {
               className={`world-label ${near === location.id ? "near" : ""}`}
               onClick={() => open(location.id)}
               aria-label={`Open ${location.name}`}
+              title={location.name}
             >
-              <span>{location.name}</span>
+              <span className="world-label-number">
+                {locations.indexOf(location) + 1}
+              </span>
+              <span className="world-label-name">{location.name}</span>
               <small>{location.subtitle}</small>
             </button>
           </Html>

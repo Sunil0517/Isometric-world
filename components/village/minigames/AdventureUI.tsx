@@ -1,20 +1,15 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Trophy, Gem, Heart, Pause, Play } from "lucide-react";
-import {
-  activities,
-  achievementNames,
-} from "@/lib/village/minigames/config";
+import { X, Trophy, Gem, Heart, Pause, Play, Minus, Plus } from "lucide-react";
+import { activities, achievementNames } from "@/lib/village/minigames/config";
 import {
   MAX_HEARTS,
   totalGems,
   checkpoints,
 } from "@/lib/village/minigames/course";
 import { requestRespawn, useAdventure } from "@/lib/village/minigames/store";
-import { playCue } from "@/lib/village/minigames/audio";
 import { releaseInput, useGame } from "@/lib/village/store";
-import { projects, skillGroups } from "@/lib/village/data";
 function Result() {
   const game = useAdventure((s) => s.activeGame),
     score = useAdventure((s) => s.score),
@@ -41,9 +36,7 @@ function Result() {
       >
         ✦
       </div>
-      <h3>
-        {failed ? "Out of hearts." : "Trail conquered."}
-      </h3>
+      <h3>{failed ? "Out of hearts." : "Trail conquered."}</h3>
       <p>
         {failed
           ? `Reached flag ${Math.max(1, checkpoint + 1)} of ${checkpoints.length} · ${gems}/${totalGems} gems`
@@ -196,7 +189,11 @@ export default function AdventureUI() {
             <span
               className="trail-hearts"
               role="img"
-              aria-label={`${s.hearts} of ${MAX_HEARTS} hearts`}
+              aria-label={
+                s.hearts > MAX_HEARTS
+                  ? `${s.hearts} hearts, ${s.hearts - MAX_HEARTS} extra lives`
+                  : `${s.hearts} of ${MAX_HEARTS} hearts`
+              }
             >
               {Array.from({ length: MAX_HEARTS }, (_, i) => (
                 <Heart
@@ -206,6 +203,9 @@ export default function AdventureUI() {
                   fill={i < s.hearts ? "currentColor" : "none"}
                 />
               ))}
+              {s.hearts > MAX_HEARTS && (
+                <b className="bonus-lives">+{s.hearts - MAX_HEARTS}</b>
+              )}
             </span>
             <span className="trail-gems" aria-label="Gems collected">
               <Gem size={18} /> {s.gems}
@@ -215,19 +215,65 @@ export default function AdventureUI() {
           </div>
           <section className="parkour-hud" aria-label="Parkour challenge">
             <strong>Jungle trial</strong>
-            <small>
-              Flag {Math.max(1, s.checkpoint + 1)} / {checkpoints.length} ·
-              Space jumps · land on grunts to stomp them
+            <small className="trail-stage">
+              Flag {Math.max(1, s.checkpoint + 1)} / {checkpoints.length}
+              <span className="trail-keyboard-hint">
+                {" · "}Space jumps · land on grunts to stomp them
+              </span>
             </small>
-            <div>
-              <button onClick={() => handOffFocus(requestRespawn)}>
+            <div
+              className="trial-zoom"
+              role="group"
+              aria-label="Trial camera zoom"
+            >
+              <output
+                className="sr-only"
+                aria-label="Trial zoom"
+                aria-live="polite"
+              >
+                {Math.round(s.trialZoom * 100)}%
+              </output>
+              <button
+                aria-label="Zoom out"
+                disabled={s.trialZoom <= 0.6}
+                onClick={() =>
+                  handOffFocus(() => s.setTrialZoom(s.trialZoom - 0.2))
+                }
+              >
+                <Minus size={16} />
+              </button>
+              <button
+                aria-label="Zoom in"
+                disabled={s.trialZoom >= 2.2}
+                onClick={() =>
+                  handOffFocus(() => s.setTrialZoom(s.trialZoom + 0.2))
+                }
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+            <div className="trail-actions">
+              <button
+                className="trail-secondary"
+                onClick={() => handOffFocus(requestRespawn)}
+              >
                 Reset to checkpoint
               </button>
-              <button onClick={() => handOffFocus(s.play)}>Restart</button>
+              <button
+                className="trail-secondary"
+                onClick={() => handOffFocus(s.play)}
+              >
+                Restart
+              </button>
               <button onClick={() => handOffFocus(s.pause)}>
                 <Pause size={14} /> Pause
               </button>
-              <button onClick={() => handOffFocus(s.exit)}>Exit</button>
+              <button
+                className="trail-secondary"
+                onClick={() => handOffFocus(s.exit)}
+              >
+                Exit
+              </button>
             </div>
           </section>
         </>
@@ -259,7 +305,12 @@ export default function AdventureUI() {
                   <div className="activity-intro">
                     <div className="reward-symbol">⚑</div>
                     <p>
-                      Cross a jungle lagoon: dodge rolling logs and spiked balls, land on grunts to stomp them, bounce on mushrooms, ride the boost pads and rafts, and gather gems. You have five hearts — a splash or a hit costs one, and a splash sends you back to your last flag. Jump with Space or the touch button.
+                      Cross twelve flags through a jungle lagoon: dodge rolling
+                      logs and spiked balls, land on grunts to stomp them,
+                      bounce on mushrooms, ride the boost pads and rafts, and
+                      gather gems. You have five hearts — a splash or a hit
+                      costs one, and a splash sends you back to your last flag.
+                      Jump with Space or the touch button.
                     </p>
                     <button className="primary-button" onClick={s.play}>
                       <Play size={17} /> Begin
@@ -271,7 +322,10 @@ export default function AdventureUI() {
                   <>
                     {s.phase === "paused" && (
                       <div className="activity-intro">
-                        <p>Your adventure is paused. Take your time.</p>
+                        <p>
+                          Your adventure is paused. Adjust camera zoom with + /
+                          − while playing, or pinch and scroll.
+                        </p>
                         <button className="primary-button" onClick={s.resume}>
                           Resume
                         </button>
@@ -285,6 +339,16 @@ export default function AdventureUI() {
                     {s.phase === "playing" && (
                       <button onClick={s.pause}>Pause</button>
                     )}
+                    {s.phase === "paused" && (
+                      <button
+                        onClick={() => {
+                          requestRespawn();
+                          s.resume();
+                        }}
+                      >
+                        Reset to checkpoint
+                      </button>
+                    )}
                     <button onClick={() => s.start(activity.id)}>
                       Restart challenge
                     </button>
@@ -292,7 +356,7 @@ export default function AdventureUI() {
                   </div>
                 )}
                 <p className="game-help">
-                  Your portfolio is always open in the top navigation.
+                  Pause the trial to reset, restart, or return to the village.
                 </p>
               </div>
             </Dialog.Content>

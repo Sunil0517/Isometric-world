@@ -28,6 +28,7 @@ import {
 } from "@/lib/village/store";
 import { blocksMovement, useAdventure } from "@/lib/village/minigames/store";
 import { nearestActivity } from "@/lib/village/minigames/config";
+import LeafEmblem from "./LeafEmblem";
 import Panels, { VillageMap } from "./Panels";
 const AdventureUI = dynamic(() => import("./minigames/AdventureUI"), {
   ssr: false,
@@ -67,7 +68,8 @@ function MobileControls() {
     pointer = useRef<number | null>(null),
     [stick, setStick] = useState({ x: 0, y: 0 });
   const near = useGame((s) => s.near),
-    position = useGame((s) => s.position);
+    position = useGame((s) => s.position),
+    activeGame = useAdventure((s) => s.activeGame);
   function update(event: React.PointerEvent) {
     const rect = pad.current?.getBoundingClientRect();
     if (!rect) return;
@@ -123,14 +125,16 @@ function MobileControls() {
           <ChevronsUp size={24} />
           <small>Jump</small>
         </button>
-        <button
-          disabled={!near && !nearestActivity(...position)}
-          onClick={() => interact()}
-          aria-label="Interact"
-        >
-          <ArrowUpRight size={24} />
-          <small>Explore</small>
-        </button>
+        {!activeGame && (
+          <button
+            disabled={!near && !nearestActivity(...position)}
+            onClick={() => interact()}
+            aria-label="Interact"
+          >
+            <ArrowUpRight size={24} />
+            <small>Explore</small>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -333,7 +337,7 @@ export default function Experience() {
   const activityTarget = nearestActivity(...position);
   return (
     <main
-      className={`village-experience ${started ? "is-exploring" : ""} ${reduced ? "reduced-motion" : ""}`}
+      className={`village-experience ${started ? "is-exploring" : ""} ${activeGame ? "is-in-trial" : ""} ${reduced ? "reduced-motion" : ""}`}
     >
       <a className="skip-link" href="/portfolio">
         Skip to standard portfolio
@@ -343,7 +347,7 @@ export default function Experience() {
         id="world-input"
         role="group"
         tabIndex={0}
-        aria-label="Interactive isometric forest village"
+        aria-label="Interactive isometric Hidden Leaf Village"
       >
         <SceneBoundary>
           <Scene />
@@ -353,10 +357,10 @@ export default function Experience() {
       <header className="village-header">
         <Link href="/" className="village-brand">
           <span className="brand-symbol">
-            <Leaf size={22} />
+            <LeafEmblem size={26} />
           </span>
           <span>
-            The Forest Village
+            Hidden Leaf Village
             <small>
               {portfolio.name} · {portfolio.role}
             </small>
@@ -414,24 +418,25 @@ export default function Experience() {
         </div>
       </header>
       <div className="world-status">
-        <span className="status-dot" /> A small world. A little of me.
+        <span className="status-dot" /> Full stack developer. Shinobi spirit.
         <span className="status-divider">/</span>
         <span>Built to be explored</span>
       </div>
       {!started && (
         <section className="village-welcome">
           <span className="welcome-kicker">
-            <span /> A DEVELOPER’S LITTLE WORLD
+            <span /> WELCOME TO HIDDEN LEAF VILLAGE
           </span>
           <h1>
-            Thoughtful code.
-            <br />A curious <em>spirit.</em>
+            My code.
+            <br />
+            My ninja <em>way.</em>
           </h1>
           <p>
-            Welcome to my corner of the forest.
+            I’m {portfolio.name}, a {portfolio.role.toLowerCase()}.
             <br />
-            Follow the trails. Peek inside. Get to know
-            <br className="desktop-break" /> the maker behind the work.
+            Explore my work, training, and journey
+            <br className="desktop-break" /> through Hidden Leaf Village.
           </p>
           <button
             id="explore-button"
@@ -446,9 +451,9 @@ export default function Experience() {
             {ready ? "Explore the village" : "Preparing the village…"}
             <ArrowUpRight size={18} />
           </button>
-          <a className="standard-link" href="/portfolio">
+          <Link className="standard-link" href="/portfolio">
             Just here for the portfolio? <ArrowUpRight size={14} />
-          </a>
+          </Link>
           {slow && !ready && (
             <p className="loading-note" role="status">
               Loading is taking a little longer. The standard portfolio is
@@ -457,12 +462,12 @@ export default function Experience() {
           )}
         </section>
       )}
-      {started && (
+      {started && !activeGame && (
         <div className="exploration-note">
           <Compass size={16} />
           <span>
             {visited.length === 5
-              ? "You’ve explored every landmark."
+              ? "All landmarks discovered."
               : "Make yourself at home."}
             <small>{visited.length} of 5 places discovered</small>
           </span>
@@ -482,11 +487,7 @@ export default function Experience() {
         <Compass size={24} />
         <span>N</span>
       </div>
-      {started &&
-        !panel &&
-        (!activeGame || (activeGame === "parkour" && phase === "playing")) && (
-          <ViewControls />
-        )}
+      {started && !panel && !activeGame && <ViewControls />}
       <footer className="village-footer">
         <div className="controls-hint">
           <span className="control-keys">

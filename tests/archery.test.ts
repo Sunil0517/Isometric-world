@@ -56,8 +56,9 @@ describe("archery target hit detection", () => {
   it("detects bullseye on Golden Sun Shrine", () => {
     const hit = checkArrowHit(50, 28, targets, crystals, puzzles, critters);
     expect(hit.hitType).toBe("bullseye");
-    expect(hit.targetId).toBe("shrine-sun");
-    expect(hit.points).toBe(250);
+    expect(hit.targetId).toBe("l10-shrine");
+    expect(hit.points).toBe(500);
+    expect(hit.message).toContain("+500");
   });
 
   it("detects crystal and puzzle piece hits", () => {

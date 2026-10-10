@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Html } from "@react-three/drei";
+import { Html } from "@/components/village/SceneHtml";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
@@ -10,7 +10,7 @@ import {
   type RapierRigidBody,
 } from "@react-three/rapier";
 import * as THREE from "three";
-import { Box, Cylinder, Rock } from "./Primitives";
+import { Box, Rock } from "./Primitives";
 import { movement, type MovementState } from "@/lib/village/data";
 import { canJump, cameraMovement, nearestLocation } from "@/lib/village/logic";
 import {
@@ -19,6 +19,7 @@ import {
   requestRespawn,
   useAdventure,
 } from "@/lib/village/minigames/store";
+import { trialFraming } from "@/lib/village/minigames/camera";
 import { playCue } from "@/lib/village/minigames/audio";
 import {
   ARENA_MIN_X,
@@ -53,8 +54,13 @@ function ArrivalPin() {
       zIndexRange={[7, 0]}
       style={{ pointerEvents: "none" }}
     >
-      <div className="arrival-pin" role="status">
-        You are here<span>▼</span>
+      <div
+        className="arrival-pin"
+        role="status"
+        aria-label="You are here"
+        title="You are here"
+      >
+        <span className="arrival-dot" />
       </div>
     </Html>
   );
@@ -71,7 +77,7 @@ function CharacterModel({
     <group ref={visual} position={[0, -0.73, 0]}>
       <group ref={limbs}>
         <group position={[-0.17, 0.3, 0]}>
-          <Box color="#54483b" scale={[0.23, 0.5, 0.27]} />
+          <Box color="#344653" scale={[0.23, 0.5, 0.27]} />
           <Box
             color="#3d392f"
             position={[0, -0.18, 0.08]}
@@ -79,7 +85,7 @@ function CharacterModel({
           />
         </group>
         <group position={[0.17, 0.3, 0]}>
-          <Box color="#54483b" scale={[0.23, 0.5, 0.27]} />
+          <Box color="#344653" scale={[0.23, 0.5, 0.27]} />
           <Box
             color="#3d392f"
             position={[0, -0.18, 0.08]}
@@ -87,7 +93,7 @@ function CharacterModel({
           />
         </group>
         <group position={[-0.39, 0.9, 0]}>
-          <Box color="#d4b477" scale={[0.2, 0.55, 0.25]} />
+          <Box color="#476a4d" scale={[0.2, 0.55, 0.25]} />
           <Rock
             color="#efc69d"
             position={[0, -0.25, 0]}
@@ -95,7 +101,7 @@ function CharacterModel({
           />
         </group>
         <group position={[0.39, 0.9, 0]}>
-          <Box color="#d4b477" scale={[0.2, 0.55, 0.25]} />
+          <Box color="#476a4d" scale={[0.2, 0.55, 0.25]} />
           <Rock
             color="#efc69d"
             position={[0, -0.25, 0]}
@@ -103,9 +109,9 @@ function CharacterModel({
           />
         </group>
       </group>
-      <Box color="#d9ad62" position={[0, 0.86, 0]} scale={[0.6, 0.66, 0.38]} />
+      <Box color="#648255" position={[0, 0.86, 0]} scale={[0.6, 0.66, 0.38]} />
       <Box
-        color="#6d5a3d"
+        color="#253744"
         position={[0, 0.65, 0.02]}
         scale={[0.62, 0.13, 0.41]}
       />
@@ -137,15 +143,20 @@ function CharacterModel({
           scale={[0.035, 0.043, 0.025]}
         />
       ))}
-      <Cylinder
-        color="#63784e"
-        position={[0, 1.75, 0]}
-        scale={[0.37, 0.17, 0.36]}
+      <Box
+        color="#293f4f"
+        position={[0, 1.59, 0.05]}
+        scale={[0.67, 0.14, 0.56]}
       />
-      <Rock
-        color="#f4d796"
-        position={[0.2, 1.88, 0]}
-        scale={[0.09, 0.2, 0.035]}
+      <Box
+        color="#bec9c4"
+        position={[0, 1.59, 0.34]}
+        scale={[0.38, 0.12, 0.035]}
+      />
+      <Box
+        color="#364e43"
+        position={[0, 1.59, 0.365]}
+        scale={[0.065, 0.065, 0.015]}
       />
     </group>
   );
@@ -432,21 +443,30 @@ export default function Player() {
       camera.updateProjectionMatrix();
       return;
     }
-    cameraDesired.current.set(
-      game.started ? p.x : 0,
-      game.started ? p.y : 0,
-      game.started ? p.z : 5,
+    const framing = trialFraming(
+      p,
+      useAdventure.getState().checkpoint,
+      size.width,
+      size.height,
+      useAdventure.getState().trialZoom,
     );
+    cameraDesired.current.set(
+      game.started ? (inArena ? framing.x : p.x) : 0,
+      game.started ? p.y : 2,
+      game.started ? (inArena ? framing.z : p.z) : 0,
+    );
+    const trialZoom = framing.zoom;
     if (adventureRuntime.cameraSnap || previousCamera.current !== camera) {
       adventureRuntime.cameraSnap = false;
       cameraTarget.current.copy(cameraDesired.current);
       previousCamera.current = camera;
       if (camera instanceof THREE.OrthographicCamera)
-        camera.zoom =
-          Math.min(size.width / 58, size.height / 43) *
-          (game.started ? 1.32 : 1) *
-          (inArena ? 1.12 : 1) *
-          game.zoom;
+        camera.zoom = inArena
+          ? trialZoom
+          : Math.min(size.width / 58, size.height / 43) *
+            (game.started ? 1.32 : 0.3) *
+            (inArena ? 1.12 : 1) *
+            game.zoom;
     }
     cameraTarget.current.lerp(
       cameraDesired.current,
@@ -459,11 +479,12 @@ export default function Player() {
     );
     camera.lookAt(cameraTarget.current);
     const ortho = camera as THREE.OrthographicCamera;
-    const targetZoom =
-      Math.min(size.width / 58, size.height / 43) *
-      (game.started ? 1.32 : 1) *
-      (inArena ? 1.12 : 1) *
-      game.zoom;
+    const targetZoom = inArena
+      ? trialZoom
+      : Math.min(size.width / 58, size.height / 43) *
+        (game.started ? 1.32 : 0.3) *
+        (inArena ? 1.12 : 1) *
+        game.zoom;
     ortho.zoom += (targetZoom - ortho.zoom) * (1 - Math.exp(-3 * delta));
     ortho.updateProjectionMatrix();
   });

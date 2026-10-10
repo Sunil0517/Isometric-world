@@ -11,16 +11,14 @@ export default function RealisticLighting() {
   const { gl, scene } = useThree(),
     quality = useGame((s) => s.quality);
   useEffect(() => {
-    const ultra = quality === "ultra";
-    setRealisticMaterials(ultra);
-    if (!ultra) return;
+    setRealisticMaterials(true);
     gl.toneMapping = THREE.ACESFilmicToneMapping;
-    gl.toneMappingExposure = 1.05;
+    gl.toneMappingExposure = 1.0;
     const generator = new THREE.PMREMGenerator(gl),
       room = new RoomEnvironment();
     const environment = generator.fromScene(room, 0.04);
     scene.environment = environment.texture;
-    scene.environmentIntensity = 0.35;
+    scene.environmentIntensity = quality === "ultra" ? 0.55 : 0.4;
     // Analytic environment avoids large texture downloads.
     generator.dispose();
     room.dispose();

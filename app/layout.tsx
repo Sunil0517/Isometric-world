@@ -14,13 +14,14 @@ import "./globals.css";
 import { portfolio } from "@/lib/portfolio";
 export const metadata: Metadata = {
   openGraph: {
-    title: `The Forest Village — ${portfolio.name}`,
-    description: "A tiny world of thoughtful code and a curious spirit.",
+    title: `Hidden Leaf Village — ${portfolio.name}`,
+    description:
+      "Sunil Kumawat · Full Stack Developer. Explore my work, skills, and experience in Hidden Leaf Village.",
     type: "website",
   },
-  title: `The Forest Village — ${portfolio.name}`,
+  title: `Hidden Leaf Village — ${portfolio.name}`,
   description:
-    "Explore a handcrafted forest village. Discover projects, meet the developer, and follow a little curiosity.",
+    "Sunil Kumawat’s full stack developer portfolio: React, Next.js, Node.js, PostgreSQL, professional experience, and contact details in an interactive Hidden Leaf Village.",
 };
 export default function RootLayout({
   children,

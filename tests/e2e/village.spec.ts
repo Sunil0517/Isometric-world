@@ -4,31 +4,44 @@ test("portfolio sections, filtering, focus, map, and fallback", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Thoughtful code. A curious spirit." }),
+    page.getByRole("heading", { name: "My code. My ninja way." }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Explore the village", exact: true }),
+  ).toBeEnabled({ timeout: 45000 });
+  await page.screenshot({ path: "output/playwright/hidden-leaf-welcome.png" });
   await page
     .getByRole("navigation", { name: "Portfolio navigation" })
     .getByRole("button", { name: "Projects", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
   await expect(
-    dialog.getByRole("heading", { name: "The Forge" }),
+    dialog.getByRole("heading", { name: "Mission Hall" }),
   ).toBeVisible();
   await expect(
-    dialog.getByRole("heading", { name: "Botanical", exact: true }),
+    dialog.getByRole("heading", {
+      name: "E-commerce Theme Pilot",
+      exact: true,
+    }),
   ).toBeVisible();
   await dialog
     .getByRole("button", { name: "Applications", exact: true })
     .click();
   await expect(
-    dialog.getByRole("heading", { name: "Daylight", exact: true }),
+    dialog.getByRole("heading", {
+      name: "Multi-tenant Site Builder",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
-    dialog.getByRole("heading", { name: "Botanical", exact: true }),
+    dialog.getByRole("heading", {
+      name: "E-commerce Theme Pilot",
+      exact: true,
+    }),
   ).toHaveCount(0);
-  await dialog.getByRole("button", { name: "Explore concept" }).click();
+  await dialog.getByRole("button", { name: "View work details" }).click();
   await expect(
-    dialog.getByText("A dashboard exploring everyday"),
+    dialog.getByText("Built a multi-tenant site builder platform end-to-end"),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
@@ -37,7 +50,7 @@ test("portfolio sections, filtering, focus, map, and fallback", async ({
     page.getByRole("heading", { name: "Village map", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Open Forest House from map" })
+    .getByRole("button", { name: "Open Hokage Office from map" })
     .click();
   await expect(
     page.getByRole("heading", { name: "Hi, I’m Sunil." }),
@@ -48,15 +61,48 @@ test("portfolio sections, filtering, focus, map, and fallback", async ({
     .getByRole("button", { name: "Contact", exact: true })
     .click();
   await expect(
-    page.getByText("An email address hasn’t been configured yet."),
+    page.getByRole("link", { name: /sunilkumawat7717@gmail.com/ }),
   ).toBeVisible();
+  await expect(dialog.getByRole("link", { name: /Phone/ })).toHaveAttribute(
+    "href",
+    "tel:+917300192621",
+  );
+  await expect(dialog.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/Sunil0517",
+  );
+  await expect(dialog.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+    "href",
+    "https://www.linkedin.com/in/sunil-kumawat-3bb6ba178/",
+  );
+  const resume = await page.request.get("/Sunil_Kumawat_Resume.docx");
+  expect(resume.ok()).toBe(true);
+  expect(resume.headers()["content-type"]).toContain(
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  );
   await page.keyboard.press("Escape");
   await page.goto("/portfolio");
   await expect(
     page.getByRole("heading", { name: "Sunil Kumawat" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Selected concepts" }),
+    page.getByRole("heading", { name: "Selected work" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("CGPA: 9.0 / 10", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText("React Basics", { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Junior Developer · The Developer Company",
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("March 2024 – Present", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("September 2023 – February 2024", { exact: true }),
   ).toBeVisible();
 });
 test("playable controller moves, jumps, and pauses for panels", async ({
@@ -127,7 +173,7 @@ test("mobile controls and responsive panels", async ({ page }) => {
     .getByRole("button", { name: "Skills", exact: true })
     .click();
   await expect(
-    page.getByRole("dialog").getByRole("heading", { name: "The Library" }),
+    page.getByRole("dialog").getByRole("heading", { name: "Ninja Academy" }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -163,7 +209,7 @@ test("buildings block movement and proximity E opens the correct landmark", asyn
   expect(Number(await status.getAttribute("data-y"))).toBeGreaterThan(0.65);
   await page.keyboard.press("e");
   await expect(
-    page.getByRole("dialog").getByRole("heading", { name: "The Library" }),
+    page.getByRole("dialog").getByRole("heading", { name: "Ninja Academy" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -189,7 +235,7 @@ test("standard portfolio is readable with JavaScript disabled", async ({
     page.getByRole("heading", { name: "Sunil Kumawat", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Botanical", exact: true }),
+    page.getByRole("heading", { name: "E-commerce Theme Pilot", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Experience", exact: true }),
@@ -219,6 +265,19 @@ test("jungle trial enters the arena with hearts and gems, then returns home", as
       timeout: 15000,
     })
     .toBeGreaterThan(90);
+  await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+  await expect(page.getByLabel("Trial zoom", { exact: true })).toHaveText(
+    "120%",
+  );
+  await page.getByRole("button", { name: "Zoom out", exact: true }).click();
+  await expect(page.getByLabel("Trial zoom", { exact: true })).toHaveText(
+    "100%",
+  );
+  await page.locator("canvas").hover();
+  await page.mouse.wheel(0, -120);
+  await expect(page.getByLabel("Trial zoom", { exact: true })).not.toHaveText(
+    "100%",
+  );
   await page.getByRole("button", { name: "Exit", exact: true }).click();
   await expect
     .poll(async () => Number(await status.getAttribute("data-x")), {

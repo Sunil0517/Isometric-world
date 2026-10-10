@@ -1,4 +1,5 @@
 "use client";
+import { waterShader } from "../waterShader";
 /* Three.js scene objects are intentionally mutated from frame callbacks. */
 /* eslint-disable react-hooks/immutability */
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
@@ -264,7 +265,14 @@ function gapTo(x: number, z: number, w: number, d: number) {
   }
   return best;
 }
-const guardianBase = { x: 43, z: -61, w: 10, d: 6.5, top: 5.0 };
+const finalFlag = checkpoints[checkpoints.length - 1];
+const guardianBase = {
+  x: finalFlag.x,
+  z: finalFlag.z - 8.5,
+  w: 10,
+  d: 6.5,
+  top: finalFlag.y,
+};
 function buildScenery(low: boolean): Scenery {
   const random = mulberry32(1337),
     s: Scenery = {
@@ -566,41 +574,16 @@ function Lagoon({ textures }: { textures: ReturnType<typeof useTextures> }) {
       >
         <planeGeometry args={[420, 420]} />
         <meshStandardMaterial
-          color="#14b0a4"
+          color="#397f83"
           transparent
-          opacity={0.8}
-          roughness={0.12}
-          metalness={0.08}
+          opacity={0.9}
+          roughness={0.24}
+          metalness={0}
           emissive="#087a80"
-          emissiveIntensity={0.28}
+          emissiveIntensity={0}
           depthWrite={false}
-          customProgramCacheKey={() => "jungle-water-v1"}
-          onBeforeCompile={(shader) => {
-            shader.uniforms.uTime = time.current;
-            shader.vertexShader = shader.vertexShader
-              .replace(
-                "#include <common>",
-                "#include <common>\nvarying vec3 vWorld;",
-              )
-              .replace(
-                "#include <begin_vertex>",
-                "#include <begin_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;",
-              );
-            shader.fragmentShader = shader.fragmentShader
-              .replace(
-                "#include <common>",
-                "#include <common>\nvarying vec3 vWorld; uniform float uTime;",
-              )
-              .replace(
-                "#include <color_fragment>",
-                `#include <color_fragment>
-                float c1 = sin(vWorld.x*0.9 + uTime*1.1) + sin(vWorld.z*1.1 - uTime*0.9) + sin((vWorld.x+vWorld.z)*1.7 + uTime*1.6);
-                float c2 = sin(vWorld.x*5.3 - uTime*1.9) * sin(vWorld.z*4.9 + uTime*1.5);
-                float sparkle = smoothstep(1.55, 1.95, c2 + 0.35*sin(c1*2.0));
-                diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*vec3(0.8,1.08,1.02), 0.5 + 0.5*sin(c1));
-                diffuseColor.rgb += vec3(0.5,0.95,0.9) * sparkle * 0.55;`,
-              );
-          }}
+          customProgramCacheKey={() => "water-pbr-v2"}
+          onBeforeCompile={(shader) => waterShader(shader, time.current)}
         />
       </mesh>
     </>

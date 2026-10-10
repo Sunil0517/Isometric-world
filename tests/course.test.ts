@@ -20,7 +20,7 @@ import {
   totalGems,
 } from "../lib/village/minigames/course";
 import { adventureRuntime, useAdventure } from "../lib/village/minigames/store";
-import { useGame } from "../lib/village/store";
+import { MAX_ZOOM, useGame } from "../lib/village/store";
 
 beforeEach(() => {
   useAdventure.setState({
@@ -57,6 +57,15 @@ describe("jungle course layout", () => {
       ["u2", "u3"],
       ["u3", "u4"],
       ["u4", "I8"],
+      ["I8", "v1"],
+      ["v1", "v2"],
+      ["v2", "I9"],
+      ["I9", "B6"],
+      ["B6", "I10"],
+      ["I10", "w1"],
+      ["w1", "w2"],
+      ["w2", "w3"],
+      ["w3", "I11"],
     ];
     for (const [a, b] of walkable) {
       const from = platformById(a),
@@ -71,7 +80,7 @@ describe("jungle course layout", () => {
     expect(new Set(collectibles.map((c) => c.id)).size).toBe(
       collectibles.length,
     );
-    expect(checkpoints).toHaveLength(9);
+    expect(checkpoints).toHaveLength(12);
     expect(totalGems).toBeGreaterThanOrEqual(40);
   });
   it("detects a flag only on top of its platform", () => {
@@ -84,6 +93,28 @@ describe("jungle course layout", () => {
       nearestCheckpointIndex(c.x + 9, c.y + PLAYER_CENTER_OFFSET, c.z),
     ).toBe(-1);
     expect(KILL_Y).toBeLessThan(0);
+  });
+});
+
+describe("advanced jungle stages", () => {
+  it("introduces narrower landings and hazards without blocking the route", () => {
+    expect(platformById("v1").w).toBeLessThan(platformById("s1").w);
+    expect(platformById("B6").d).toBeLessThan(platformById("B5").d);
+    expect(logs.find((l) => l.id === "L4")!.period).toBeLessThan(
+      logs.find((l) => l.id === "L1")!.period,
+    );
+    expect(swings.some((w) => w.id === "W6")).toBe(true);
+    expect(checkpoints.at(-1)?.id).toBe("I11");
+  });
+  it("clamps manual zoom and restores it for a new run", () => {
+    const s = useAdventure.getState();
+    s.setTrialZoom(9);
+    expect(useAdventure.getState().trialZoom).toBe(2.2);
+    s.setTrialZoom(-1);
+    expect(useAdventure.getState().trialZoom).toBe(0.6);
+    s.start("parkour");
+    s.play();
+    expect(useAdventure.getState().trialZoom).toBe(1);
   });
 });
 
@@ -134,6 +165,14 @@ describe("jungle hazards", () => {
 });
 
 describe("hearts, gems and stars", () => {
+  it("frames the trial even when entering from first-person at minimum zoom", () => {
+    useGame.setState({ view: "first-person", zoom: 0.75 });
+    const s = useAdventure.getState();
+    s.start("parkour");
+    s.play();
+    expect(useGame.getState().view).toBe("birdseye");
+    expect(useGame.getState().zoom).toBe(MAX_ZOOM);
+  });
   it("awards one star for finishing and more for gems and hearts", () => {
     expect(parkourStars(0, 1)).toBe(1);
     expect(parkourStars(Math.ceil(totalGems * 0.6), 1)).toBe(2);
@@ -162,14 +201,19 @@ describe("hearts, gems and stars", () => {
     });
     expect(useAdventure.getState().achievements).toContain("parkour");
   });
-  it("heals up to the maximum only", () => {
+  it("restores lost hearts and banks extra lives when full", () => {
     const s = useAdventure.getState();
     s.start("parkour");
     s.play();
     s.hurt();
     s.heal();
     s.heal();
+    expect(useAdventure.getState().hearts).toBe(MAX_HEARTS + 1);
+    s.hurt();
     expect(useAdventure.getState().hearts).toBe(MAX_HEARTS);
+    s.heal();
+    s.heal();
+    expect(useAdventure.getState().hearts).toBe(MAX_HEARTS + 2);
   });
   it("sends the player home only when they actually entered the arena", () => {
     const s = useAdventure.getState();

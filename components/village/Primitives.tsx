@@ -88,7 +88,7 @@ function configureMaterial(mat: THREE.MeshStandardMaterial) {
           )
           .replace(
             "#include <begin_vertex>",
-            "#include <begin_vertex>\nvSurfacePosition = position;",
+            "#include <begin_vertex>\nvSurfacePosition = (modelMatrix * vec4(position, 1.0)).xyz;",
           );
         shader.fragmentShader = shader.fragmentShader
           .replace(
@@ -98,14 +98,16 @@ function configureMaterial(mat: THREE.MeshStandardMaterial) {
           .replace(
             "#include <color_fragment>",
             `#include <color_fragment>
-      float grain = fract(sin(dot(floor(vSurfacePosition * 95.0), vec3(12.9898, 78.233, 39.425))) * 43758.5453);
+      float grain = sin(vSurfacePosition.x * 7.0) * sin(vSurfacePosition.z * 9.0);
       float strata = sin(vSurfacePosition.y * 65.0 + sin(vSurfacePosition.x * 9.0) * 2.0);
-      diffuseColor.rgb *= 0.91 + grain * 0.1 + strata * 0.035;
+      diffuseColor.rgb *= 0.97 + grain * 0.015 + strata * 0.015;
     `,
           );
       }
     : THREE.Material.prototype.onBeforeCompile;
-  mat.customProgramCacheKey = realistic ? () => "forest-realistic-v1" : THREE.Material.prototype.customProgramCacheKey;
+  mat.customProgramCacheKey = realistic
+    ? () => "forest-realistic-v2"
+    : THREE.Material.prototype.customProgramCacheKey;
   mat.needsUpdate = true;
 }
 export function setRealisticMaterials(enabled: boolean) {

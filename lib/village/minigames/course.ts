@@ -57,6 +57,16 @@ export const platforms: Platform[] = [
   P("u3", "stone", 43.4, 4.2, -43.8, 2.4, 2.4),
   P("u4", "stone", 40.5, 4.7, -47, 2.4, 2.4),
   P("I8", "island", 43, 5.2, -52.5, 8, 8),
+  // Advanced stages: precision jumps, a narrow log bridge, then a spiked ascent.
+  P("v1", "stone", 49.2, 5.2, -52.5, 1.8, 1.8),
+  P("v2", "stone", 52.6, 5.2, -52.5, 1.8, 1.8),
+  P("I9", "island", 57.2, 5.2, -52.5, 4.8, 4.8),
+  P("B6", "plank", 64.6, 5.2, -52.5, 10, 1.6),
+  P("I10", "island", 72, 5.2, -52.5, 4.8, 4.8),
+  P("w1", "stone", 72, 5.6, -57, 1.8, 1.8),
+  P("w2", "stone", 72, 6.0, -60.4, 1.8, 1.8),
+  P("w3", "stone", 72, 6.4, -63.8, 1.8, 1.8),
+  P("I11", "island", 72, 6.4, -67, 5.2, 5.2),
 ];
 export const platformById = (id: string) => platforms.find((p) => p.id === id)!;
 
@@ -72,6 +82,9 @@ export const checkpointIds = [
   "I6",
   "I7",
   "I8",
+  "I9",
+  "I10",
+  "I11",
 ] as const;
 export const checkpoints = checkpointIds.map((id) => {
   const p = platformById(id);
@@ -143,6 +156,30 @@ export interface Log {
 }
 export const logs: Log[] = [
   {
+    id: "L4",
+    x: 63,
+    y: 5.2,
+    z: -52.5,
+    along: "x",
+    amp: 2.5,
+    period: 2.7,
+    phase: 0,
+    radius: 0.45,
+    halfLength: 1.1,
+  },
+  {
+    id: "L5",
+    x: 67,
+    y: 5.2,
+    z: -52.5,
+    along: "x",
+    amp: 2,
+    period: 2.4,
+    phase: 1.4,
+    radius: 0.45,
+    halfLength: 1.1,
+  },
+  {
     id: "L1",
     x: 104,
     y: 0.5,
@@ -161,7 +198,7 @@ export const logs: Log[] = [
     z: -32,
     along: "x",
     amp: 2.5,
-    period: 3.6,
+    period: 3.0,
     phase: 0,
     radius: 0.45,
     halfLength: 1.5,
@@ -173,7 +210,7 @@ export const logs: Log[] = [
     z: -32,
     along: "x",
     amp: 2.5,
-    period: 3.6,
+    period: 3.0,
     phase: 1.5,
     radius: 0.45,
     halfLength: 1.5,
@@ -199,6 +236,28 @@ export interface Swing {
   phase: number;
 }
 export const swings: Swing[] = [
+  {
+    id: "W5",
+    x: 52.6,
+    y: 10,
+    z: -52.5,
+    plane: "z",
+    length: 4.1,
+    amp: 0.85,
+    period: 2.6,
+    phase: 0.9,
+  },
+  {
+    id: "W6",
+    x: 72,
+    y: 10.8,
+    z: -60.4,
+    plane: "x",
+    length: 4.4,
+    amp: 0.85,
+    period: 2.5,
+    phase: 1.1,
+  },
   {
     id: "W1",
     x: 95.6,
@@ -229,7 +288,7 @@ export const swings: Swing[] = [
     plane: "x",
     length: 4.6,
     amp: 0.9,
-    period: 3.1,
+    period: 2.65,
     phase: 0.4,
   },
   {
@@ -240,7 +299,7 @@ export const swings: Swing[] = [
     plane: "z",
     length: 5.1,
     amp: 0.85,
-    period: 3.3,
+    period: 2.8,
     phase: 2.2,
   },
 ];
@@ -269,6 +328,13 @@ export interface Grunt {
 export const GRUNT_SIZE = 0.85;
 export const grunts: Grunt[] = [
   {
+    id: "G3",
+    a: [56, 5.2, -53.6],
+    b: [58.4, 5.2, -51.4],
+    speed: 2.3,
+    phase: 0.25,
+  },
+  {
     id: "G1",
     a: [70, 2.8, -19.4],
     b: [70, 2.8, -25.6],
@@ -279,7 +345,7 @@ export const grunts: Grunt[] = [
     id: "G2",
     a: [70, 2.8, -26.8],
     b: [70, 2.8, -21],
-    speed: 1.8,
+    speed: 2.1,
     phase: 0.5,
   },
 ];
@@ -336,6 +402,9 @@ const lifted = (ids: string[], height: number): V3[] =>
     return [p.x, p.y + height, p.z] as V3;
   });
 const gemPoints: V3[] = [
+  ...through(lifted(["v1", "v2", "I9"], 1.2), 2, 0.6),
+  ...line([60, 6.4, -52.5], [69.5, 6.4, -52.5], 6, 1.0),
+  ...through(lifted(["w1", "w2", "w3", "I11"], 1.2), 2, 0.7),
   ...line([104, 1.5, 26.5], [104, 1.5, 19.5], 5),
   ...line([101, 1.6, 15.5], [90.4, 2.0, 15.5], 6, 0.8),
   ...line([87.4, 2.2, 12.2], [87, 3.8, 6.8], 6, 3.4),
@@ -350,6 +419,7 @@ const gemPoints: V3[] = [
   [44.4, 6.2, -52.5],
 ];
 export const collectibles: Collectible[] = [
+  { id: "heart-3", kind: "heart", position: [58.8, 6.4, -53.6] },
   ...gemPoints.map((position, i): Collectible => ({
     id: `gem-${i}`,
     kind: "gem",

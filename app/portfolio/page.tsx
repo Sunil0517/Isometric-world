@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ResumeDetails } from "@/components/village/ResumeDetails";
 import {
   locations,
   portfolio,
@@ -12,10 +13,10 @@ export default function PortfolioPage() {
     <main className="standard-portfolio">
       <header>
         <Link href="/">← Return to the village</Link>
-        <span>The Forest Village</span>
+        <span>Hidden Leaf Village</span>
       </header>
       <section className="standard-intro">
-        <span className="panel-eyebrow">THE MAKER BEHIND THE WORLD</span>
+        <span className="panel-eyebrow">THE DEVELOPER BEHIND THE VILLAGE</span>
         <h1>{portfolio.name}</h1>
         <p>{portfolio.role}</p>
         <nav aria-label="Portfolio sections">
@@ -30,18 +31,20 @@ export default function PortfolioPage() {
         <h2>About me</h2>
         <p>{portfolio.description}</p>
         <p>{portfolio.intro}</p>
+        <ResumeDetails />
       </section>
       <section id="projects">
-        <h2>Selected concepts</h2>
+        <h2>Selected work</h2>
         <p>
-          Sample projects. Live links and case studies haven’t been configured.
+          Professional contributions at The Developer Company, documented in my
+          resume.
         </p>
         <div className="standard-projects">
           {projects.map((p) => (
             <article key={p.id}>
               <small>{p.type}</small>
               <h3>{p.title}</h3>
-              <p>{p.description}</p>
+              <p>{p.longDescription ?? p.description}</p>
               <div className="village-tags">
                 {p.tags.map((t) => (
                   <span key={t}>{t}</span>
@@ -54,7 +57,7 @@ export default function PortfolioPage() {
       <section id="skills">
         <h2>Skills library</h2>
         <p>
-          Editable sample categories, rather than verified claims of expertise.
+          Languages, frameworks, databases, and tools from my technical toolkit.
         </p>
         <div className="skills-list">
           {skillGroups.map((g) => (
@@ -84,6 +87,11 @@ export default function PortfolioPage() {
                   <li key={r}>{r}</li>
                 ))}
               </ul>
+              <div className="village-tags">
+                {e.technologies.map((technology) => (
+                  <span key={technology}>{technology}</span>
+                ))}
+              </div>
               {e.outcome && <p>{e.outcome}</p>}
             </article>
           ))
@@ -98,6 +106,10 @@ export default function PortfolioPage() {
         ) : (
           <p>An email address hasn’t been configured yet.</p>
         )}
+        <a href={portfolio.phoneHref}>{portfolio.phone}</a>
+        <a href={portfolio.resumeUrl} download>
+          Download resume (.docx)
+        </a>
         {portfolio.github && <a href={portfolio.github}>GitHub</a>}
         {portfolio.linkedin && <a href={portfolio.linkedin}>LinkedIn</a>}
       </section>
